@@ -13,9 +13,24 @@ void writePage(int block, char buf[11]);
 struct pageTableEntry {
 	int pageNumber;	
 	int address;
+	bool present;
+};
+
+struct virtualMemory{
+	pageTableEntry pageTable[10];
+	char pages[3][8];
 };
 
 int main(){
+
+
+	virtualMemory virtualMem = createVirtualMemory();
+
+	char byte;
+	for(int i=0;i<100;i++){
+		readByte(i, byte);
+		printf(byte);
+	}
 
 	char page[11];
 
