@@ -10,43 +10,55 @@ using namespace std;
 void readPage(int block, char buf[11]);
 void writePage(int block, char buf[11]);
 
-struct pageTableEntry {
-	int pageNumber;	
-	int address;
-	bool present;
-};
+
 
 struct virtualMemory{
-	pageTableEntry pageTable[10];
-	char pages[3][8];
-};
+	int pageTable[10]; //form pb where p is page frame and b is present bit
+	char pages[3][11];
+	int currentFrame;
+} virtualMem;
+
+char pageTableLookup(int address, virtualMemory *vm);
 
 int main(){
 
+//	int pageTable[] = {0,0,0,0,0,0,0,0,0,0};
 
-	virtualMemory virtualMem = createVirtualMemory();
+	for(int i =0;i<9;i++)
+		virtualMem.pageTable[i] = -1;
+
+	virtualMem.currentFrame = 0;
+
+	virtualMemory *vmp = &virtualMem;
 
 	char byte;
 	for(int i=0;i<100;i++){
-		readByte(i, byte);
-		printf(byte);
+		printf("%c",pageTableLookup(i, &virtualMem));
+		//pageTableLookup(i, &virtualMem);
 	}
 
-	char page[11];
+	//char page[11];
+//	readPage(1, page);
+//	string value(page);
+	//cout << value << endl;
 
-	cout << "reading page 3: " ;
-	readPage(3, page);		
-	string value(page);
-	cout << value << endl;
+	// printf("\n");
 
-	cout << "writing page 3: " ;
-	char newPage[11] = "cccccccccc";
-	writePage(3, newPage);		
-
-	cout << "reading page 3: " ;
-	readPage(3, page);		
-	string value3(page);
-	cout << value3 << endl;
+//	char page[11];
+//
+//	cout << "reading page 3: " ;
+//	readPage(3, page);
+//	string value(page);
+//	cout << value << endl;
+//
+//	cout << "writing page 3: " ;
+//	char newPage[11] = "cccccccccc";
+//	writePage(3, newPage);
+//
+//	cout << "reading page 3: " ;
+//	readPage(3, page);
+//	string value3(page);
+//	cout << value3 << endl;
 
 	return 0;
 }
@@ -67,7 +79,7 @@ void readPage(int pageNum, char buf[11]){
 
 		fclose(pFile);
 
-		//return the page 
+		//return the page
 		strncpy(buf, page, 11);
 		return;
 }
@@ -84,8 +96,39 @@ void writePage(int pageNumber, char buf[11]){
 
 		//write page to disk
 		fputs(buf, pFile);
-		
+
 		fclose(pFile);
 
 		return;
+}
+
+
+
+
+char pageTableLookup(int address, virtualMemory *vm){
+	int page = floor(address/10);
+	int offset = address % 10;
+
+	int pageTableEntry = vm->pageTable[page];
+
+	if(pageTableEntry >= 0)
+		return vm->pages[page][offset];
+
+	int currentPageFrame = vm->currentFrame%3;
+
+	readPage(page+1, vm->pages[currentPageFrame]);
+
+	vm->pageTable[page] = currentPageFrame;
+
+	for(int i =0 ;i<10;i++){
+		int pf = vm->pageTable[i];
+		if(pf == currentPageFrame){
+			vm->pageTable[i] = -1;
+		}
+	}
+
+	vm->currentFrame ++;
+
+	return vm->pages[currentPageFrame][offset];
+
 }
